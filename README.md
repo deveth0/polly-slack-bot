@@ -2,7 +2,9 @@
 
 Serverless Poll Bot for Slack using the [Serverless Framework for deployment](https://www.serverless.com/framework).
 
-Polly is designed to run on AWS infrastructure using [Lambda](https://aws.amazon.com/lambda/) and [DynamoDB](https://aws.amazon.com/dynamodb/). For small to medium teams the free tier provided by AWS should allow the usage without any costs.
+Polly is designed to run on AWS infrastructure using [Lambda](https://aws.amazon.com/lambda/)
+and [DynamoDB](https://aws.amazon.com/dynamodb/). For small to medium teams the free tier provided by AWS should allow
+the usage without any costs.
 
 ## Usage
 
@@ -12,11 +14,13 @@ After installing and adding the Bot to your Channel, you can create new polls us
 /poll "Do you like cats?" "Yes" "Of Course" "Everybody loves cats"
 ```
 
-Next to the created poll you'll find a menu button which allows you to close and delete the poll. Furthermore you can open the settings menu that is used for things like scheduling.
+Next to the created poll you'll find a menu button which allows you to close and delete the poll. Furthermore you can
+open the settings menu that is used for things like scheduling.
 
 ### Scheduling
 
-You can create reuccuring polls using the scheduling feature. Open the settings menu, select the prefered schedule type and then configure it. 
+You can create reuccuring polls using the scheduling feature. Open the settings menu, select the prefered schedule type
+and then configure it.
 
 The configured time is using the user's timezone.
 
@@ -69,8 +73,10 @@ There is a docker-compose file in `/dynamodb` that can be used to start a local 
 
 Afterwards the Bot can be started with `npm start`. It's required to setup some reverse proxy (e.g. using `ngrok`).
 
-
 # Acknowledgements
 
-This bot was largely inspired by the [openpollslack](https://gitlab.com/openpollslack/openpollslack) build by @KazuAlex.
+This bot was largely inspired by the [openpollslack](https://gitlab.com/openpollslack/openpollslack) build
+by [@KazuAlex](https://github.com/KazuAlex).
+
+The logo was kindly provided by [@luisalisanne](https://github.com/luisalisanne).
 
