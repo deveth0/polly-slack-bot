@@ -1,0 +1,119 @@
+service: express-app
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-dynamodb-local
+  - serverless-offline
+
+useDotenv: true
+
+custom:
+  prod:
+    schedule: "cron(0 * * * ? *)"
+  dev:
+    schedule: "cron(* * * * ? *)"
+
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+      # Comment if you don't have a DynamoDB running locally
+      noStart: true
+    migration:
+      dir: dynamodb/migrations
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: eu-west-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+            - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}/index/*"
+            - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}-votes"
+            - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}-votes/index/*"
+            - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}-schedules"
+            - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}-schedules/index/*"
+
+  environment:
+    CLIENT_SIGNING_SECRET: ${env:CLIENT_SIGNING_SECRET}
+    BOT_TOKEN: ${env:BOT_TOKEN}
+    WEBHOOK_URI: /api/messages
+    DYNAMODB_TABLE: ${self:service}-${sls:stage}
+
+functions:
+  pollyBot:
+    handler: src/app.handler
+    events:
+      - http:
+          path: slack/events
+          method: post
+
+  scheduler:
+    handler: src/scheduler/scheduler.handler
+    events:
+      - schedule:
+          rate: ${self:custom.${sls:stage}.schedule}
+          enabled: true
+
+resources:
+  Description: CloudFormation Stack for the Polly Poll Bot
+  Resources:
+    PollDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+    SchedulesDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}-schedules
+    VotesDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: PollId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        GlobalSecondaryIndexes:
+          - IndexName: "PollIdIndex"
+            KeySchema:
+              - AttributeName: PollId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}-votes
