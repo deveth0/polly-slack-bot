@@ -1,0 +1,30 @@
+HELP.md
+target/
+src/main/frontend/build/
+
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### VS Code ###
+.vscode/
+
+
+node_modules/
+node/
+dist/
+npm-debug.log
+coverage/
+.build/
+.dynamodb/
+.serverless/
+
+yarn-error.log
+
+.env*
