@@ -25,4 +25,4 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Build
-        run: serverless package
+        run: npm run build
