@@ -26,3 +26,7 @@ jobs:
         run: npm run lint
       - name: Build
         run: npm run build
+        env:
+          CLIENT_SIGNING_SECRET: DUMMY_CLIENT_SIGNING_SECRET
+          BOT_TOKEN: DUMMY_BOT_TOKEN
+
