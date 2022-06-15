@@ -43,7 +43,6 @@ export async function handleVote({ action, ack, body }: SlackActionMiddlewareArg
     return;
   } else {
     const isSingleVote = poll.Options !== undefined && poll.Options.singleVote;
-    console.log("singleVote" + isSingleVote);
     await dynamoClient.castVote(value.pollId, value.id, user_id, isSingleVote);
 
     // Update the displayed message
