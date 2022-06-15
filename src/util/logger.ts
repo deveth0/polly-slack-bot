@@ -1,6 +1,6 @@
 class Logger {
   log(obj: unknown) {
-    console.log(`-------\n${JSON.stringify(obj)}\n----------`);
+    console.error(`-------\n${JSON.stringify(obj)}\n----------`);
   }
 }
 

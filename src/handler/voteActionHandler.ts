@@ -35,14 +35,16 @@ export async function handleVote({ action, ack, body }: SlackActionMiddlewareArg
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const value = JSON.parse(action.value) as VoteActionValue;
-  console.log(`Voting for ${value.pollId} (choice ${value.id}) (channel: ${channel}`);
+  const poll = await dynamoClient.getPoll(value.pollId);
 
   // verify that the poll is still open
-  if (await dynamoClient.isPollClosed(value.pollId)) {
+  if (poll.Closed) {
     await postError(body.channel.id, body.user.id, "You can't change your votes on closed poll.");
     return;
   } else {
-    await dynamoClient.castVote(value.pollId, value.id, user_id);
+    const isSingleVote = poll.Options !== undefined && poll.Options.singleVote;
+    console.log("singleVote" + isSingleVote);
+    await dynamoClient.castVote(value.pollId, value.id, user_id, isSingleVote);
 
     // Update the displayed message
     const votes = await dynamoClient.getVotes(value.pollId);

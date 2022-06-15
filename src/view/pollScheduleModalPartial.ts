@@ -6,7 +6,6 @@ import { POLL_SCHEDULE_TYPE_SELECT_ACTION_ID } from "../handler/pollSettingsModa
  * Render the partial to configure poll scheduling
  */
 export function renderPollScheduleModalPartial(
-  pollId: string,
   tzOffset: number,
   existingSchedule?: Schedule,
   newScheduleType?: ScheduleType,
@@ -25,13 +24,12 @@ export function renderPollScheduleModalPartial(
 
   blocks.push(renderScheduleTypeSelect(currentOption));
 
-  blocks.push(...renderScheduleTypeConfig(pollId, tzOffset, existingSchedule, newScheduleType));
+  blocks.push(...renderScheduleTypeConfig(tzOffset, existingSchedule, newScheduleType));
 
   return blocks;
 }
 
 function renderScheduleTypeConfig(
-  pollId: string,
   tzOffset: number,
   existingSchedule?: Schedule,
   newScheduleType?: ScheduleType,
@@ -176,12 +174,12 @@ function renderScheduleTypeSelect(currentOption?: string): KnownBlock {
       value: "CRON",
     },
     /*{
-                                  text: {
-                                    type: "plain_text",
-                                    text: "Other",
-                                  },
-                                  value: "OTHER",
-                                },*/
+                                      text: {
+                                        type: "plain_text",
+                                        text: "Other",
+                                      },
+                                      value: "OTHER",
+                                    },*/
   ];
 
   const selectedOption: PlainTextOption = options.find(opt => opt.value === currentOption);

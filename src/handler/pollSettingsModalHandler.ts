@@ -1,4 +1,4 @@
-import { AllMiddlewareArgs, SlackActionMiddlewareArgs, SlackViewMiddlewareArgs } from "@slack/bolt";
+import { AllMiddlewareArgs, Logger, SlackActionMiddlewareArgs, SlackViewMiddlewareArgs, ViewOutput } from "@slack/bolt";
 import { BlockAction } from "@slack/bolt/dist/types/actions/block-action";
 import { isStaticSelectAction } from "../util/typechecks";
 import { postError } from "../view/viewHelper";
@@ -8,8 +8,12 @@ import { ViewStateValue, ViewSubmitAction } from "@slack/bolt/dist/types/view";
 import { parse } from "@datasert/cronjs-parser";
 import * as cronjsMatcher from "@datasert/cronjs-matcher";
 import dynamodb from "../database/dynamodb";
+import { isAllowedToEditPoll } from "../util/permissions";
+import { PollOptions } from "../model/Poll";
 
 export const POLL_SCHEDULE_TYPE_SELECT_ACTION_ID = "pollScheduleTypeSelect";
+export const POLL_ADMINS_ACTION_ID = "pollAdmins";
+export const POLL_ADMIN_OPTIONS_ID = "pollOptions";
 
 /**
  * Handles the change of the Poll Schedule Type
@@ -63,19 +67,53 @@ export async function handlePollScheduleTypeChange({
   }
 }
 
-export async function handlePollSettingsSubmit({
+/**
+ * Handle submit of the Poll Settings Modal
+ */
+export async function handlePollSettingsModalSubmit({
   ack,
   body,
   view,
+  client,
   logger,
 }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) {
   await ack();
 
   logger.info("Handling Recurring Poll Modal Submit");
-
   logger.info(JSON.stringify(view.state.values));
-  const metaData = JSON.parse(view.private_metadata) as PollSettingsModalMetadata;
 
+  const metaData = JSON.parse(view.private_metadata) as PollSettingsModalMetadata;
+  const existingPoll = await dynamodb.getPoll(metaData.pollId);
+  if (existingPoll === undefined) {
+    await postError(metaData.channelId, body.user.id, "Invalid poll");
+    return;
+  }
+  if (!(await isAllowedToEditPoll(existingPoll, body.user.id, client))) {
+    await postError(metaData.channelId, body.user.id, "Permission denied");
+    return;
+  }
+
+  await handlePollScheduleSubmit(body, view, logger, metaData);
+
+  const pollAdmins = extractSelectedUsers(view.state.values[POLL_ADMINS_ACTION_ID][POLL_ADMINS_ACTION_ID]);
+  const selectedOptions = view.state.values[POLL_ADMIN_OPTIONS_ID][POLL_ADMIN_OPTIONS_ID].selected_options.map(
+    opt => opt.value,
+  );
+  const pollOptions: PollOptions = {
+    singleVote: selectedOptions.includes("singleVote"),
+  };
+
+  logger.info(JSON.stringify(pollOptions));
+
+  await dynamodb.updatePoll(metaData.pollId, pollAdmins, pollOptions);
+}
+
+async function handlePollScheduleSubmit(
+  body: ViewSubmitAction,
+  view: ViewOutput,
+  logger: Logger,
+  metaData: PollSettingsModalMetadata,
+) {
   // cron schedule
   if (view.state.values["weekdays"] && view.state.values["time"]) {
     const weekdays = extractSubmitValues(view.state.values["weekdays"]["recurring_weekdays_action"]);
@@ -114,4 +152,8 @@ function extractSubmitValue(value: ViewStateValue): string | undefined {
 function extractSubmitValues(value: ViewStateValue): string[] {
   if (!value.selected_options) return [];
   return value.selected_options.map(opt => opt.value);
+}
+
+function extractSelectedUsers(value: ViewStateValue): string[] {
+  return value.selected_users ? value.selected_users : [];
 }

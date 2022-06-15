@@ -6,6 +6,7 @@ import { MenuItemValue } from "../model/ActionButton";
 import { deleteMessage, openModal, postError, updateMessage } from "../view/viewHelper";
 import WebClient from "@slack/web-api/dist/WebClient";
 import { renderPollSettingsModal } from "../view/pollSettingsModal";
+import { isAllowedToEditPoll } from "../util/permissions";
 
 export const POLL_OPTIONS_MENU_ACTION_ID = "poll_option_menu";
 
@@ -25,7 +26,7 @@ export async function handlePollOptionMenuAction({
     const value = JSON.parse(action.selected_option.value) as MenuItemValue;
 
     if (value.action === "btn_delete") return deletePoll(body, context, value);
-    if (value.action === "btn_close") return closePoll(body, context, value);
+    if (value.action === "btn_close") return closePoll(body, client, context, value);
     if (value.action === "btn_settings") return showSchedulePollModal(body, client, context, value);
   }
 }
@@ -47,7 +48,7 @@ async function showSchedulePollModal(body: BlockAction, client: WebClient, conte
   );
 }
 
-async function closePoll(body: BlockAction, context: Context, value: MenuItemValue) {
+async function closePoll(body: BlockAction, client: WebClient, context: Context, value: MenuItemValue) {
   if (
     !body ||
     !body.user ||
@@ -62,7 +63,9 @@ async function closePoll(body: BlockAction, context: Context, value: MenuItemVal
     return;
   }
 
-  if (body.user.id !== value.user) {
+  const poll = await dynamodb.getPoll(value.pollId);
+
+  if (!(await isAllowedToEditPoll(poll, body.user.id, client))) {
     await postError(body.channel.id, body.user.id, "You can't close poll from another user.");
     return;
   }

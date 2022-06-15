@@ -8,7 +8,7 @@ import { handleDeleteSchedule, POLL_DELETE_SCHEDULE_ACTION_ID } from "./handler/
 import { POLL_SETTINGS_MODAL_CALLBACK } from "./view/pollSettingsModal";
 import {
   handlePollScheduleTypeChange,
-  handlePollSettingsSubmit,
+  handlePollSettingsModalSubmit,
   POLL_SCHEDULE_TYPE_SELECT_ACTION_ID,
 } from "./handler/pollSettingsModalHandler";
 
@@ -41,7 +41,7 @@ class PollyBot {
     this.app.action(POLL_OPTIONS_MENU_ACTION_ID, handlePollOptionMenuAction);
 
     // schedule stuff
-    this.app.view(POLL_SETTINGS_MODAL_CALLBACK, handlePollSettingsSubmit);
+    this.app.view(POLL_SETTINGS_MODAL_CALLBACK, handlePollSettingsModalSubmit);
 
     this.app.action(POLL_DELETE_SCHEDULE_ACTION_ID, handleDeleteSchedule);
   }

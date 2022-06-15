@@ -9,6 +9,13 @@ export interface Poll {
   Closed: boolean;
   // optional ID of the parent poll (used for scheduled polls)
   ParentId: string | undefined;
+  // list of other poll admins allowed to edit the poll
+  Admins: string[];
+  Options: PollOptions;
+}
+
+export interface PollOptions {
+  singleVote: boolean;
 }
 
 export interface Vote {

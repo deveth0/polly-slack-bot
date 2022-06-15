@@ -1,6 +1,6 @@
 import AWS from "aws-sdk"; // eslint-disable-line import/no-extraneous-dependencies
 import { v4 as uuidv4 } from "uuid";
-import { Poll, Vote } from "../model/Poll";
+import { Poll, PollOptions, Vote } from "../model/Poll";
 import { Schedule, ScheduleType } from "../model/Schedule";
 import logger from "../util/logger";
 
@@ -102,6 +102,22 @@ export class DynamoClient {
       .then(value => value.Item as Poll);
   }
 
+  public async updatePoll(pollId: string, pollAdmins: string[], pollOptions: PollOptions) {
+    const params: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+      TableName: process.env.DYNAMODB_TABLE,
+      Key: {
+        id: pollId,
+      },
+      UpdateExpression: "set Admins = :c, Options = :o",
+      ExpressionAttributeValues: {
+        ":c": pollAdmins,
+        ":o": pollOptions,
+      },
+    };
+
+    return this.documentClient.update(params).promise();
+  }
+
   public async getVotes(pollId: string): Promise<Vote[]> {
     const params: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: process.env.DYNAMODB_TABLE + "-votes",
@@ -135,11 +151,11 @@ export class DynamoClient {
 
   public async deletePoll(pollId: string) {
     /*const deleteVotesParams: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
-                                                                                                  TableName: process.env.DYNAMODB_TABLE + "-votes",
-                                                                                                  Key: {
-                                                                                                    PollId: pollId,
-                                                                                                  },
-                                                                                                };*/
+                                                                                                                                                                                                                      TableName: process.env.DYNAMODB_TABLE + "-votes",
+                                                                                                                                                                                                                      Key: {
+                                                                                                                                                                                                                        PollId: pollId,
+                                                                                                                                                                                                                      },
+                                                                                                                                                                                                                    };*/
     const deletePollParams: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
       TableName: process.env.DYNAMODB_TABLE,
       Key: {
@@ -163,11 +179,30 @@ export class DynamoClient {
     return this.documentClient.delete(params).promise();
   }
 
-  public async isPollClosed(pollId: string): Promise<boolean> {
-    return this.getPoll(pollId).then(value => {
-      logger.log(value);
-      return value !== undefined && value.Closed;
+  public async deleteVote(voteId: string) {
+    const params: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
+      TableName: process.env.DYNAMODB_TABLE + "-votes",
+      Key: {
+        id: voteId,
+      },
+    };
+    return this.documentClient.delete(params).promise();
+  }
+
+  public async deleteVotes(voteIds: string[]) {
+    const params: AWS.DynamoDB.DocumentClient.BatchWriteItemInput = {
+      RequestItems: {},
+    };
+    params.RequestItems[process.env.DYNAMODB_TABLE + "-votes"] = voteIds.map(voteId => {
+      return {
+        DeleteRequest: {
+          Key: {
+            id: voteId,
+          },
+        },
+      };
     });
+    return this.documentClient.batchWrite(params).promise();
   }
 
   /**
@@ -175,20 +210,23 @@ export class DynamoClient {
    * @param pollId
    * @param choiceId
    * @param userId
+   * @param singleVote
    */
-  public async castVote(pollId: string, choiceId: string, userId: string) {
+  public async castVote(pollId: string, choiceId: string, userId: string, singleVote: boolean) {
     const votes = await this.getVotes(pollId);
-    // check if the user has already voted for the choice
-    const vote = votes.find(vote => vote.PollId === pollId && vote.ChoiceId === choiceId && vote.UserId === userId);
-    if (vote !== undefined) {
-      const params: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
-        TableName: process.env.DYNAMODB_TABLE + "-votes",
-        Key: {
-          id: vote.id,
-        },
-      };
-      return this.documentClient.delete(params).promise();
+    // check if the user has already voted for the choice => unvote
+    const userVotes = votes.filter(vote => vote.PollId === pollId && vote.UserId === userId);
+
+    const existingVote = userVotes.find(vote => vote.ChoiceId === choiceId);
+
+    if (!singleVote && existingVote !== undefined) {
+      return this.deleteVote(existingVote.id);
     } else {
+      if (singleVote && userVotes.length > 0) {
+        // delete all votes
+        logger.log("Deleting " + JSON.stringify(userVotes));
+        await this.deleteVotes(userVotes.map(vote => vote.id));
+      }
       const uuid = uuidv4();
 
       const params: AWS.DynamoDB.DocumentClient.PutItemInput = {

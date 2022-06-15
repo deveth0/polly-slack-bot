@@ -2,6 +2,7 @@ import { AllMiddlewareArgs, SlackActionMiddlewareArgs } from "@slack/bolt";
 import { BlockAction } from "@slack/bolt/dist/types/actions/block-action";
 import dynamodb from "../database/dynamodb";
 import { postError } from "../view/viewHelper";
+import { isAllowedToEditPoll } from "../util/permissions";
 
 export interface DeleteScheduleActionValue {
   pollId: string;
@@ -13,6 +14,7 @@ export async function handleDeleteSchedule({
   ack,
   action,
   body,
+  client,
   logger,
 }: SlackActionMiddlewareArgs<BlockAction> & AllMiddlewareArgs) {
   await ack();
@@ -26,7 +28,7 @@ export async function handleDeleteSchedule({
 
   const poll = await dynamodb.getPoll(value.pollId);
 
-  if (body.user.id !== poll.UserId) {
+  if (!(await isAllowedToEditPoll(poll, body.user.id, client))) {
     await postError(body.channel.id, body.user.id, "You can't delete poll schedule from another user.");
     return;
   }
