@@ -6,6 +6,7 @@ import { isButton, isContextBlock, isMrkdwnElement, isSectionBlock } from "../ut
 import { postError, updateMessage } from "../view/viewHelper";
 
 export const VOTE_HANDLE_VOTE_ACTION_ID = "handleVoteAction";
+export const VOTE_HANDLE_VOTE_LEGACY_ID = "btn_vote";
 
 export async function handleVote({ action, ack, body }: SlackActionMiddlewareArgs<BlockAction> & AllMiddlewareArgs) {
   await ack();
@@ -36,6 +37,11 @@ export async function handleVote({ action, ack, body }: SlackActionMiddlewareArg
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const value = JSON.parse(action.value) as VoteActionValue;
   const poll = await dynamoClient.getPoll(value.pollId);
+
+  if (poll === undefined) {
+    await postError(body.channel.id, body.user.id, "Poll does not exist");
+    return;
+  }
 
   // verify that the poll is still open
   if (poll.Closed) {

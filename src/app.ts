@@ -2,7 +2,7 @@ import { App, AwsLambdaReceiver, LogLevel } from "@slack/bolt";
 import { AwsCallback, AwsEvent } from "@slack/bolt/dist/receivers/AwsLambdaReceiver";
 import dynamoClient, { DynamoClient } from "./database/dynamodb";
 import { handlePollCommand } from "./handler/pollCommandHandler";
-import { handleVote, VOTE_HANDLE_VOTE_ACTION_ID } from "./handler/voteActionHandler";
+import { handleVote, VOTE_HANDLE_VOTE_ACTION_ID, VOTE_HANDLE_VOTE_LEGACY_ID } from "./handler/voteActionHandler";
 import { handlePollOptionMenuAction, POLL_OPTIONS_MENU_ACTION_ID } from "./handler/pollOptionsMenuButtonHandler";
 import { handleDeleteSchedule, POLL_DELETE_SCHEDULE_ACTION_ID } from "./handler/deleteScheduleHandler";
 import { POLL_SETTINGS_MODAL_CALLBACK } from "./view/pollSettingsModal";
@@ -35,6 +35,7 @@ class PollyBot {
     this.app.command("/poll", handlePollCommand);
 
     this.app.action(VOTE_HANDLE_VOTE_ACTION_ID, handleVote);
+    this.app.action(VOTE_HANDLE_VOTE_LEGACY_ID, handleVote);
 
     this.app.action(POLL_SCHEDULE_TYPE_SELECT_ACTION_ID, handlePollScheduleTypeChange);
 
