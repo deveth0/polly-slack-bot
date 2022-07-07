@@ -1,9 +1,8 @@
-name: Deploy Prod environment
+name: Lint and Build
 
 on:
   push:
-    branches:
-      - main
+  pull_request:
 
 jobs:
   build:
@@ -28,6 +27,6 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          CLIENT_SIGNING_SECRET: ${{ secrets.CLIENT_SIGNING_SECRET }}
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CLIENT_SIGNING_SECRET: DUMMY_CLIENT_SIGNING_SECRET
+          BOT_TOKEN: DUMMY_BOT_TOKEN
 
