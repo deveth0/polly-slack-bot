@@ -28,7 +28,7 @@ custom:
 provider:
   name: aws
   runtime: nodejs14.x
-  region: eu-west-1
+  region: eu-central-1
   tags:
     TTL: 2025-12-31
     Project: Polly-Slack-Bot
