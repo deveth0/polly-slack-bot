@@ -89,8 +89,10 @@ resources:
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
         Tags: 
-          - TTL: 2025-12-31
-          - Project: Polly-Slack-Bot
+          - Key: TTL
+            Value: 2025-12-31
+          - Key: Project
+            Value: Polly-Slack-Bot
     SchedulesDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
@@ -104,8 +106,10 @@ resources:
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.DYNAMODB_TABLE}-schedules
         Tags: 
-          - TTL: 2025-12-31
-          - Project: Polly-Slack-Bot
+          - Key: TTL
+            Value: 2025-12-31
+          - Key: Project
+            Value: Polly-Slack-Bot
     VotesDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
@@ -128,5 +132,7 @@ resources:
               ProjectionType: ALL
         TableName: ${self:provider.environment.DYNAMODB_TABLE}-votes
         Tags: 
-          - TTL: 2025-12-31
-          - Project: Polly-Slack-Bot
+          - Key: TTL
+            Value: 2025-12-31
+          - Key: Project
+            Value: Polly-Slack-Bot
