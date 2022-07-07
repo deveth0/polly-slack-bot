@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Deploy
-        run: npm install -g serverless && sls deploy
+        run: npx sls deploy --stage prod
         env:
           CLIENT_SIGNING_SECRET: ${{ secrets.CLIENT_SIGNING_SECRET }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
