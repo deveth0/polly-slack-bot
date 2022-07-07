@@ -1,4 +1,4 @@
-service: express-app
+service: polly-slack-bot
 
 plugins:
   - serverless-plugin-typescript
