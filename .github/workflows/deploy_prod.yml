@@ -27,4 +27,6 @@ jobs:
         run: npm run lint
       - name: Build
         run: npm run build
-
+        env:
+          CLIENT_SIGNING_SECRET: ${{ secrets.CLIENT_SIGNING_SECRET }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
