@@ -1,4 +1,4 @@
-service: express-app
+service: polly-slack-bot
 
 plugins:
   - serverless-plugin-typescript
@@ -28,7 +28,10 @@ custom:
 provider:
   name: aws
   runtime: nodejs14.x
-  region: eu-west-1
+  region: eu-central-1
+  tags:
+    TTL: 2025-12-31
+    Project: Polly-Slack-Bot
   iam:
     role:
       statements:
@@ -85,6 +88,11 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
+        Tags: 
+          - Key: TTL
+            Value: 2025-12-31
+          - Key: Project
+            Value: Polly-Slack-Bot
     SchedulesDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
@@ -97,6 +105,11 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.DYNAMODB_TABLE}-schedules
+        Tags: 
+          - Key: TTL
+            Value: 2025-12-31
+          - Key: Project
+            Value: Polly-Slack-Bot
     VotesDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
@@ -118,3 +131,8 @@ resources:
             Projection:
               ProjectionType: ALL
         TableName: ${self:provider.environment.DYNAMODB_TABLE}-votes
+        Tags: 
+          - Key: TTL
+            Value: 2025-12-31
+          - Key: Project
+            Value: Polly-Slack-Bot
