@@ -42,7 +42,7 @@
     "prettier": "^2.6.0",
     "rimraf": "^3.0.2",
     "serverless": "^3.19.0",
-    "serverless-dynamodb-local": "^0.2.40",
+    "serverless-dynamodb-local": "^1.0.2",
     "serverless-offline": "^8.8.0",
     "serverless-plugin-typescript": "^2.1.2",
     "ts-node": "^10.8.0",
